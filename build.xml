@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project default="all" name="SendEmailService">
+    <target name="init">
+        <path id="slee">
+            <pathelement location="lib/slee.jar"/>
+        </path>
+        <taskdef classname="org.mobicents.eclipslee.ant.SbbJar"
+            classpath="lib/slee-tasks.jar" name="sbbjar"/>
+        <taskdef classname="org.mobicents.eclipslee.ant.EventJar"
+            classpath="lib/slee-tasks.jar" name="eventjar"/>
+        <taskdef classname="org.mobicents.eclipslee.ant.ProfileSpecJar"
+            classpath="lib/slee-tasks.jar" name="profilespecjar"/>
+        <taskdef classname="org.mobicents.eclipslee.ant.DeployableJar"
+            classpath="lib/slee-tasks.jar" name="deployablejar"/>
+        <taskdef
+            classname="org.mobicents.eclipslee.ant.ResourceAdaptorTypeJar"
+            classpath="lib/slee-tasks.jar" name="resourceadaptortypejar"/>
+        <taskdef
+            classname="org.mobicents.eclipslee.ant.ResourceAdaptorJar"
+            classpath="lib/slee-tasks.jar" name="resourceadaptorjar"/>
+        <path id="ExternalComponents">
+            <pathelement location="lib/mail.jar"/>
+        </path>
+        <path id="path-SendEmail-sbb">
+            <pathelement location="/home/julian/Telcomp-Workspace/SendEmailService/jars/EndSendEmailTelcoService-event.jar"/>
+            <pathelement location="/home/julian/Telcomp-Workspace/SendEmailService/jars/StartSendEmailTelcoService-event.jar"/>
+        </path>
+    </target>
+    <target depends="init" name="all">
+        <ant target="build-StartSendEmailTelcoService-event"/>
+        <ant target="build-EndSendEmailTelcoService-event"/>
+        <ant target="build-SendEmail-sbb"/>
+        <ant target="build-sendemail-DU"/>
+    </target>
+    <target depends="init" name="clean">
+        <ant target="clean-StartSendEmailTelcoService-event"/>
+        <ant target="clean-EndSendEmailTelcoService-event"/>
+        <ant target="clean-SendEmail-sbb"/>
+        <ant target="clean-sendemail-DU"/>
+    </target>
+    <target depends="init" name="build-StartSendEmailTelcoService-event">
+        <mkdir dir="classes/StartSendEmailTelcoService-event"/>
+        <mkdir dir="jars/"/>
+        <javac destdir="classes/StartSendEmailTelcoService-event"
+            includes="org/telcomp/events/StartSendEmailTelcoServiceEvent.java" srcdir="src">
+            <classpath>
+                <path refid="slee"/>
+            </classpath>
+        </javac>
+        <eventjar classpath="classes/StartSendEmailTelcoService-event"
+            destfile="jars/StartSendEmailTelcoService-event.jar" eventjarxml="src/org/telcomp/events/StartSendEmailTelcoService-event-jar.xml"/>
+    </target>
+    <target name="clean-StartSendEmailTelcoService-event">
+        <delete file="jars/StartSendEmailTelcoService-event.jar"/>
+        <delete dir="classes/StartSendEmailTelcoService-event"/>
+    </target>
+    <target depends="init" name="build-EndSendEmailTelcoService-event">
+        <mkdir dir="classes/EndSendEmailTelcoService-event"/>
+        <mkdir dir="jars/"/>
+        <javac destdir="classes/EndSendEmailTelcoService-event"
+            includes="org/telcomp/events/EndSendEmailTelcoServiceEvent.java" srcdir="src">
+            <classpath>
+                <path refid="slee"/>
+            </classpath>
+        </javac>
+        <eventjar classpath="classes/EndSendEmailTelcoService-event"
+            destfile="jars/EndSendEmailTelcoService-event.jar" eventjarxml="src/org/telcomp/events/EndSendEmailTelcoService-event-jar.xml"/>
+    </target>
+    <target name="clean-EndSendEmailTelcoService-event">
+        <delete file="jars/EndSendEmailTelcoService-event.jar"/>
+        <delete dir="classes/EndSendEmailTelcoService-event"/>
+    </target>
+    <target depends="init" name="build-SendEmail-sbb">
+        <mkdir dir="classes/SendEmail-sbb"/>
+        <mkdir dir="jars/"/>
+        <javac destdir="classes/SendEmail-sbb"
+            includes="org/telcomp/sbb/SendEmailSbb.java" srcdir="src">
+            <classpath>
+                <path refid="path-SendEmail-sbb"/>
+                <path refid="slee"/>
+            	<path refid="ExternalComponents"/>
+            </classpath>
+        </javac>
+    	<copy file="src/org/telcomp/sbb/SendEmail-sbb-jar.xml" tofile="classes/SendEmail-sbb/sbb-jar.xml"/>
+    	<jar basedir="classes/SendEmail-sbb"
+    		destfile="jars/SendEmail-sbb.jar" includes="**/*.class">
+    	    <metainf dir="classes/SendEmail-sbb" includes="sbb-jar.xml"/>
+    	</jar>
+    </target>
+    <target name="clean-SendEmail-sbb">
+        <delete file="jars/SendEmail-sbb.jar"/>
+        <delete dir="classes/SendEmail-sbb"/>
+    </target>
+    <target
+        depends="build-SendEmail-sbb,build-EndSendEmailTelcoService-event,build-StartSendEmailTelcoService-event" name="build-sendemail-DU">
+        <mkdir dir="classes/sendemail-DU"/>
+        <copy
+            file="src/org/telcomp/service/sendemail-deployable-unit.xml" tofile="classes/sendemail-DU/deployable-unit.xml"/>
+        <jar jarfile="jars/sendemail-DU.jar">
+            <metainf dir="classes/sendemail-DU" includes="deployable-unit.xml"/>
+            <fileset dir="" includes="jars/SendEmail-sbb.jar"/>
+            <fileset dir="" includes="jars/EndSendEmailTelcoService-event.jar"/>
+            <fileset dir="" includes="jars/StartSendEmailTelcoService-event.jar"/>
+            <fileset dir="." includes="src/org/telcomp/service/sendemail-service.xml"/>
+        </jar>
+    </target>
+    <target name="clean-sendemail-DU">
+        <delete file="jars/sendemail-DU.jar"/>
+        <delete dir="classes/sendemail-DU"/>
+    </target>
+</project>
