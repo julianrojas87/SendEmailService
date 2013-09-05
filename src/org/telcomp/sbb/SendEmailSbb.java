@@ -1,5 +1,6 @@
 package org.telcomp.sbb;
 
+import java.io.FileInputStream;
 import java.util.HashMap;
 import java.util.Properties;
 
@@ -21,8 +22,17 @@ import org.telcomp.others.SMTPAuthenticator;
 
 public abstract class SendEmailSbb implements javax.slee.Sbb {
 	
+	private static boolean proxyNeeded;
+	
 	@SuppressWarnings("static-access")
 	public void onStartSendEmailTelcoServiceEvent(StartSendEmailTelcoServiceEvent event, ActivityContextInterface aci) {
+		Properties prop = new Properties();
+        try {
+			prop.load(new FileInputStream("/usr/local/Mobicents-JSLEE/telcoServices.properties"));
+			proxyNeeded = Boolean.parseBoolean(prop.getProperty("PROXY_NEEDED"));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		final String from = "telcompunicauca@gmail.com";
 		final String password = "servicioemail";
@@ -40,47 +50,56 @@ public abstract class SendEmailSbb implements javax.slee.Sbb {
 		String host = "smtp.gmail.com";
 		String port = "465";
 		
-		try {
-			Properties props = new Properties();
-			//Properties props = System.getProperties();
-			props.put("mail.smtp.user", from);
-			props.put("mail.smtp.host", host);
-			props.put("mail.smtp.port", port);
-			props.put("mail.smtp.starttls.enable","true");
-			//props.put("mail.smtp.debug", "true");
-			props.put("mail.smtp.auth", "true");
-			props.put("mail.smtp.socketFactory.port", port);
-			props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
-			props.put("mail.smtp.socketFactory.fallback", "false");
-			
-			Authenticator auth = new SMTPAuthenticator();
-			Session session = Session.getInstance(props, auth);
-			//session.setDebug(true);
-			MimeMessage message = new MimeMessage(session);
-			message.setFrom(new InternetAddress(from));
-			message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
-			message.setSubject(subject);
-			message.setText(text);
-			message.saveChanges();
-			Transport transport = session.getTransport("smtps");
-			transport.connect(host, 465, "telcompunicauca", password);
-			transport.send(message, message.getAllRecipients());
-			transport.close();
-			System.out.println("Sent Email successfully....");
-			
-			HashMap<String, Object> operationInputs = new HashMap<String, Object>();
-			operationInputs.put("sended", (String) "true");
-			EndSendEmailTelcoServiceEvent EndSendEmailWSEvent = new EndSendEmailTelcoServiceEvent(operationInputs);
-			this.fireEndSendEmailTelcoServiceEvent(EndSendEmailWSEvent, aci, null);
+		if(!proxyNeeded){
+			try {
+				Properties props = new Properties();
+				//Properties props = System.getProperties();
+				props.put("mail.smtp.user", from);
+				props.put("mail.smtp.host", host);
+				props.put("mail.smtp.port", port);
+				props.put("mail.smtp.starttls.enable","true");
+				//props.put("mail.smtp.debug", "true");
+				props.put("mail.smtp.auth", "true");
+				props.put("mail.smtp.socketFactory.port", port);
+				props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+				props.put("mail.smtp.socketFactory.fallback", "false");
+				
+				Authenticator auth = new SMTPAuthenticator();
+				Session session = Session.getInstance(props, auth);
+				//session.setDebug(true);
+				MimeMessage message = new MimeMessage(session);
+				message.setFrom(new InternetAddress(from));
+				message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
+				message.setSubject(subject);
+				message.setText(text);
+				message.saveChanges();
+				Transport transport = session.getTransport("smtps");
+				transport.connect(host, 465, "telcompunicauca", password);
+				transport.send(message, message.getAllRecipients());
+				transport.close();
+				System.out.println("Sent Email successfully....");
+				
+				HashMap<String, Object> operationInputs = new HashMap<String, Object>();
+				operationInputs.put("sended", (String) "true");
+				EndSendEmailTelcoServiceEvent EndSendEmailWSEvent = new EndSendEmailTelcoServiceEvent(operationInputs);
+				this.fireEndSendEmailTelcoServiceEvent(EndSendEmailWSEvent, aci, null);
 
-			aci.detach(this.sbbContext.getSbbLocalObject());
-		} catch (Exception ex) {
+				aci.detach(this.sbbContext.getSbbLocalObject());
+			} catch (Exception ex) {
+				HashMap<String, Object> operationInputs = new HashMap<String, Object>();
+				operationInputs.put("sended", (String) "false");
+				EndSendEmailTelcoServiceEvent EndSendEmailWSEvent = new EndSendEmailTelcoServiceEvent(operationInputs);
+				this.fireEndSendEmailTelcoServiceEvent(EndSendEmailWSEvent, aci, null);
+				aci.detach(this.sbbContext.getSbbLocalObject());
+				ex.printStackTrace();
+			}
+		} else{
+			System.out.println("Couldn't send Email due to proxy server....");
 			HashMap<String, Object> operationInputs = new HashMap<String, Object>();
 			operationInputs.put("sended", (String) "false");
 			EndSendEmailTelcoServiceEvent EndSendEmailWSEvent = new EndSendEmailTelcoServiceEvent(operationInputs);
 			this.fireEndSendEmailTelcoServiceEvent(EndSendEmailWSEvent, aci, null);
 			aci.detach(this.sbbContext.getSbbLocalObject());
-			ex.printStackTrace();
 		}
 	}
 	
