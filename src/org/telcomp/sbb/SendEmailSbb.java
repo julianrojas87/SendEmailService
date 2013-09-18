@@ -26,6 +26,12 @@ public abstract class SendEmailSbb implements javax.slee.Sbb {
 	
 	@SuppressWarnings("static-access")
 	public void onStartSendEmailTelcoServiceEvent(StartSendEmailTelcoServiceEvent event, ActivityContextInterface aci) {
+		System.out.println("*******************************************");
+		System.out.println("SendEmailTelcoService Invoked");
+		System.out.println("Input Email = "+event.getEmail());
+		System.out.println("Input Subject = "+event.getSubject());
+		System.out.println("Input Message = "+event.getMessage());
+		
 		Properties prop = new Properties();
         try {
 			prop.load(new FileInputStream("/usr/local/Mobicents-JSLEE/telcoServices.properties"));
@@ -83,15 +89,17 @@ public abstract class SendEmailSbb implements javax.slee.Sbb {
 				operationInputs.put("sended", (String) "true");
 				EndSendEmailTelcoServiceEvent EndSendEmailWSEvent = new EndSendEmailTelcoServiceEvent(operationInputs);
 				this.fireEndSendEmailTelcoServiceEvent(EndSendEmailWSEvent, aci, null);
-
 				aci.detach(this.sbbContext.getSbbLocalObject());
+				System.out.println("Output Sended = true");
+				System.out.println("*******************************************");
 			} catch (Exception ex) {
 				HashMap<String, Object> operationInputs = new HashMap<String, Object>();
 				operationInputs.put("sended", (String) "false");
 				EndSendEmailTelcoServiceEvent EndSendEmailWSEvent = new EndSendEmailTelcoServiceEvent(operationInputs);
 				this.fireEndSendEmailTelcoServiceEvent(EndSendEmailWSEvent, aci, null);
 				aci.detach(this.sbbContext.getSbbLocalObject());
-				ex.printStackTrace();
+				System.out.println("Output Sended = false");
+				System.out.println("*******************************************");
 			}
 		} else{
 			System.out.println("Couldn't send Email due to proxy server....");
@@ -100,6 +108,8 @@ public abstract class SendEmailSbb implements javax.slee.Sbb {
 			EndSendEmailTelcoServiceEvent EndSendEmailWSEvent = new EndSendEmailTelcoServiceEvent(operationInputs);
 			this.fireEndSendEmailTelcoServiceEvent(EndSendEmailWSEvent, aci, null);
 			aci.detach(this.sbbContext.getSbbLocalObject());
+			System.out.println("Output Sended = false");
+			System.out.println("*******************************************");
 		}
 	}
 	
